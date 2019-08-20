@@ -7,14 +7,14 @@
 
 namespace
 {
-auto Table = initializeParticleData();
+    auto Table = initializeParticleData();
 
-auto makeRandomEngine()
-{
-    return std::default_random_engine(std::random_device()());
-}
+    auto makeRandomEngine()
+    {
+        return std::default_random_engine(std::random_device()());
+    }
 
-auto engine = makeRandomEngine();
+    auto engine = makeRandomEngine();
 
 } // namespace
 
