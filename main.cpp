@@ -8,15 +8,13 @@
 #include <SFML/Window/Event.hpp>
 #include <SFML/System/Time.hpp>
 
-
-
 int main()
 {
     std::cout << "sf::Time size " << sizeof(sf::Time) << '\n'
               << "sf::Color size " << sizeof(sf::Color) << '\n'
               << "sf::Vector2f size " << sizeof(sf::Vector2f) << '\n'
-              << "Particle size " << sizeof(Particle) << '\n'
-              << "System size" << sizeof(ParticleSystem) << '\n';
+              << "Particle size " << sizeof(Particle<>) << '\n'
+              << "System size" << sizeof(ParticleSystem<>) << '\n';
     sf::Texture texture;
     texture.loadFromFile("assets/Particle.png");
     texture.setSmooth(true);
@@ -30,24 +28,19 @@ int main()
         txtr.display();
         texture = txtr.getTexture();
     }
-    ParticleSystem sys(Particle::Type::Fire, texture);
+
+    ParticleSystem<> sys(texture, sf::seconds(5.f), sf::Color::Red);
 
     // sys.addAffector([](std::deque<Particle>&){
     // });
-
-    int begx = 0, begy = 0;
-    for(int j = 0 ; j < 5 ; ++j)
+    sys.addAffector([](ParticleSystem<>::aliveList& particleList)
     {
-
-        for (int i = 0; i < 10; i++)
+        for(auto& particle : particleList)
         {
-            sys.addPath(begx, ++begy);
-            sys.addPath(begx, ++begy);
-            sys.addPath(begx, ++begy);
-            sys.addPath(begx, ++begy);
-            sys.addPath(++begx, ++begy);
+            particle.position.x++;
+            particle.position.y++;
         }
-    }
+    });
 
     sf::RenderWindow window(sf::VideoMode(1000, 1000), "ParticleDemo", sf::Style::Default);
 
