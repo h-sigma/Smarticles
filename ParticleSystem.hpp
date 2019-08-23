@@ -9,8 +9,6 @@
 #include <SFML/Graphics/Vertex.hpp>
 #include <SFML/Graphics/VertexArray.hpp>
 
-
-#include <random>
 #include <vector>
 #include <deque>
 #include <functional>
@@ -24,11 +22,13 @@ class ParticleSystem : public sf::Drawable
 public:
     using aliveList = std::deque<Particle<Args...>>;
 public:
-    ParticleSystem(sf::Texture &texture, sf::Time defaultLifetime, sf::Color defaultColor, Args... defaultParticleAttr);
-    void addParticle(sf::Vector2f position, Args... attr);
+    ParticleSystem(sf::Texture &texture, sf::Time defaultLifetime, sf::Color defaultColor, Args&&... defaultParticleAttr);
+    void addParticle(sf::Vector2f position, Args&&... attr);
+    void addParticle(sf::Vector2f position, std::tuple<Args...>&& attr);
     void addAffector(std::function<void(aliveList &)> affector);
     void setLifetime(sf::Time lifetime);
-    void addShader(std::function<void(sf::VertexArray &)> shader);
+    std::tuple<Args...> getDefaultAttrSet() const;
+    void addFinalizer(std::function<void(sf::VertexArray &)> finalizer);
     void update(sf::Time dt);
 private:
     void computeVertices() const;
@@ -36,43 +36,26 @@ private:
     void draw(sf::RenderTarget &target, sf::RenderStates states) const override;
 
 protected:
-    sf::Texture &mTexture;
-
     aliveList mParticles;
     mutable sf::VertexArray mVertexArray;
 
     std::vector<std::function<void(aliveList &)>> mAffector;
-    std::vector<std::function<void(sf::VertexArray&)>> mShaders;
+    std::vector<std::function<void(sf::VertexArray&)>> mFinalizer;
     
     mutable bool mNeedsUpdate = true;
 
     sf::Color mDefaultColor;
     Particle<Args...> mDefaultParticle;
+    sf::Texture &mTexture;
 };
 
 // TEMPLATE DEFINITIONS
 
-namespace
-{
-auto makeRandomEngine()
-{
-    return std::default_random_engine(std::random_device()());
-}
-
-auto engine = makeRandomEngine();
-
-} // namespace
-
-int getInt(int a, int b)
-{
-    std::uniform_int_distribution<> dist(a, b);
-    return dist(engine);
-}
-
 template <typename... Args>
-ParticleSystem<Args...>::ParticleSystem(sf::Texture &texture, sf::Time defaultLifetime, sf::Color defaultColor, Args... defaultParticleArgs)
-    : mTexture(texture), mVertexArray(sf::Quads), mDefaultParticle({}, defaultLifetime, std::forward<Args...>(defaultParticleArgs...))
+ParticleSystem<Args...>::ParticleSystem(sf::Texture &texture, sf::Time defaultLifetime, sf::Color defaultColor, Args&&... defaultParticleAttr)
+    : mTexture(texture), mVertexArray(sf::Quads), mDefaultParticle({}, defaultLifetime, std::forward<Args>(defaultParticleAttr)...)
 {
+
 }
 
 template <typename... Args>
@@ -82,24 +65,33 @@ void ParticleSystem<Args...>::addAffector(std::function<void(aliveList &)> affec
 }
 
 template <typename... Args>
- void ParticleSystem<Args...>::addShader(std::function<void(sf::VertexArray &)> shader)
+ void ParticleSystem<Args...>::addFinalizer(std::function<void(sf::VertexArray &)> finalizer)
  {
-    mShaders.push_back(shader);
+    mFinalizer.push_back(finalizer);
  }
 
-template <typename... Args>
-void ParticleSystem<Args...>::addParticle(sf::Vector2f position, Args... attr)
+template <typename... Args> 
+void ParticleSystem<Args...>::addParticle(sf::Vector2f position, Args&&... attr)
 {
-    Particle<Args...> particle;
-    particle.position = position;
-    particle.lifetime = mDefaultParticle.lifetime;
-    mParticles.emplace_back(position, mDefaultParticle.lifetime, attr...);
+    mParticles.emplace_back(position, mDefaultParticle.lifetime, std::forward<Args>(attr)... );
+}
+
+template <typename... Args>
+void ParticleSystem<Args...>::addParticle(sf::Vector2f position, std::tuple<Args...>&& attr)
+{
+    mParticles.emplace_back(position, mDefaultParticle.lifetime, attr);
 }
 
 template <typename... Args>
 void ParticleSystem<Args...>::setLifetime(sf::Time lifetime)
 {
     mDefaultParticle.lifetime = lifetime;
+}
+
+template <typename... Args>
+std::tuple<Args...> ParticleSystem<Args...>::getDefaultAttrSet() const
+{
+    return mDefaultParticle.attr;
 }
 
 template <typename... Args>
@@ -168,8 +160,8 @@ void ParticleSystem<Args...>::draw(sf::RenderTarget &target, sf::RenderStates st
     if (mNeedsUpdate)
     {
         computeVertices();
-        for(auto& shader : mShaders)
-            shader(mVertexArray);
+        for(auto& finalizer : mFinalizer)
+            finalizer(mVertexArray);
         mNeedsUpdate = false;
     }
 

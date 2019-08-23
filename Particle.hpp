@@ -6,6 +6,7 @@
 #include <SFML/System/Vector2.hpp>
 
 #include <vector>
+#include <tuple>
 #include <cstdint>
 
 // enum class Tags : uint32_t {
@@ -35,13 +36,21 @@
 //     int pathindex = 0;  //4 bytes
 // };
 
-template<typename... T>
+template <typename... T>
 struct Particle
 {
-    //sf::Color color;                
+    //sf::Color color;
     sf::Vector2f position;
-    sf::Time lifetime;           //   1
-    std::tuple<T...> attr;       //   2...n
+    sf::Time lifetime;     //   1
+    std::tuple<T...> attr; //   2...n
+    Particle(sf::Vector2f position = {}, sf::Time lifetime = sf::Time::Zero, T &&... args)
+        : position(position), lifetime(lifetime), attr(std::forward_as_tuple(args...))
+    {
+    }
+    // Particle(sf::Vector2f position = {}, sf::Time lifetime = sf::Time::Zero, T const&... args)
+    //     : position(position), lifetime(lifetime), attr(std::forward_as_tuple(args...))
+    // {
+    // }
 };
 
 
