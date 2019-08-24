@@ -16,18 +16,16 @@
 int getInt(int a, int b);
 
 //TEMPLATE DECLARATION
-template <typename... Args>
+template <typename ParticleType = BaseParticle>
 class ParticleSystem : public sf::Drawable
 {
 public:
-    using aliveList = std::deque<Particle<Args...>>;
-public:
-    ParticleSystem(sf::Texture &texture, sf::Time defaultLifetime, sf::Color defaultColor, Args&&... defaultParticleAttr);
-    void addParticle(sf::Vector2f position, Args&&... attr);
-    void addParticle(sf::Vector2f position, std::tuple<Args...>&& attr);
-    void addAffector(std::function<void(aliveList &)> affector);
+    ParticleSystem(sf::Texture &texture, sf::Color defaultColor, ParticleType particle);
+    void addParticle(ParticleType const& particle);
+    void addParticle(ParticleType&& particle);
+    void addAffector(std::function<void(std::deque<ParticleType> &)> affector);
     void setLifetime(sf::Time lifetime);
-    std::tuple<Args...> getDefaultAttrSet() const;
+    std::tuple<ParticleType> getDefaultParticle() const;
     void addFinalizer(std::function<void(sf::VertexArray &)> finalizer);
     void update(sf::Time dt);
 private:
@@ -36,66 +34,66 @@ private:
     void draw(sf::RenderTarget &target, sf::RenderStates states) const override;
 
 protected:
-    aliveList mParticles;
+    std::deque<ParticleType> mParticles;
     mutable sf::VertexArray mVertexArray;
 
-    std::vector<std::function<void(aliveList &)>> mAffector;
+    std::vector<std::function<void(std::deque<ParticleType> &)>> mAffector;
     std::vector<std::function<void(sf::VertexArray&)>> mFinalizer;
     
     mutable bool mNeedsUpdate = true;
 
     sf::Color mDefaultColor;
-    Particle<Args...> mDefaultParticle;
+    ParticleType mDefaultParticle;
     sf::Texture &mTexture;
 };
 
 // TEMPLATE DEFINITIONS
 
-template <typename... Args>
-ParticleSystem<Args...>::ParticleSystem(sf::Texture &texture, sf::Time defaultLifetime, sf::Color defaultColor, Args&&... defaultParticleAttr)
-    : mTexture(texture), mVertexArray(sf::Quads), mDefaultParticle({}, defaultLifetime, std::forward<Args>(defaultParticleAttr)...)
+template <typename ParticleType>
+ParticleSystem<ParticleType>::ParticleSystem(sf::Texture &texture, sf::Color defaultColor, ParticleType particle)
+    : mTexture(texture), mVertexArray(sf::Quads), mDefaultParticle(particle), mDefaultColor(defaultColor)
 {
 
 }
 
-template <typename... Args>
-void ParticleSystem<Args...>::addAffector(std::function<void(aliveList &)> affector)
+template <typename ParticleType>
+void ParticleSystem<ParticleType>::addAffector(std::function<void(std::deque<ParticleType> &)> affector)
 {
     mAffector.push_back(affector);
 }
 
-template <typename... Args>
- void ParticleSystem<Args...>::addFinalizer(std::function<void(sf::VertexArray &)> finalizer)
+template <typename ParticleType>
+void ParticleSystem<ParticleType>::addFinalizer(std::function<void(sf::VertexArray &)> finalizer)
  {
     mFinalizer.push_back(finalizer);
  }
 
-template <typename... Args> 
-void ParticleSystem<Args...>::addParticle(sf::Vector2f position, Args&&... attr)
+template <typename ParticleType> 
+void ParticleSystem<ParticleType>::addParticle(ParticleType&& particle)
 {
-    mParticles.emplace_back(position, mDefaultParticle.lifetime, std::forward<Args>(attr)... );
+    mParticles.push_back(std::move(particle));
 }
 
-template <typename... Args>
-void ParticleSystem<Args...>::addParticle(sf::Vector2f position, std::tuple<Args...>&& attr)
+template <typename ParticleType>
+void ParticleSystem<ParticleType>::addParticle(ParticleType const& particle)
 {
-    mParticles.emplace_back(position, mDefaultParticle.lifetime, attr);
+    mParticles.push_back(particle);
 }
 
-template <typename... Args>
-void ParticleSystem<Args...>::setLifetime(sf::Time lifetime)
+template <typename ParticleType>
+void ParticleSystem<ParticleType>::setLifetime(sf::Time lifetime)
 {
     mDefaultParticle.lifetime = lifetime;
 }
 
-template <typename... Args>
-std::tuple<Args...> ParticleSystem<Args...>::getDefaultAttrSet() const
+template <typename ParticleType>
+std::tuple<ParticleType> ParticleSystem<ParticleType>::getDefaultParticle() const
 {
-    return mDefaultParticle.attr;
+    return mDefaultParticle;
 }
 
-template <typename... Args>
-void ParticleSystem<Args...>::computeVertices() const
+template <typename ParticleType>
+void ParticleSystem<ParticleType>::computeVertices() const
 {
     static int diff = 0;
 
@@ -117,16 +115,16 @@ void ParticleSystem<Args...>::computeVertices() const
         addVertex(pos.x - half.x, pos.y + half.y, 0.f, size.y, c);
     }
 
-    // if (diff != mParticles.size())
-    // {
-    //     std::cout << mParticles.size() << std::endl;
-    //     diff = mParticles.size();
-    // }
+    if (diff != mParticles.size())
+    {
+        std::cout << mParticles.size() << " " << mVertexArray.getVertexCount() << std::endl;
+        diff = mParticles.size();
+    }
 }
 
 //need to be fixed
-template <typename... Args>
-void ParticleSystem<Args...>::addVertex(float worldX, float worldY, float textX, float textY, sf::Color color) const
+template <typename ParticleType>
+void ParticleSystem<ParticleType>::addVertex(float worldX, float worldY, float textX, float textY, sf::Color color) const
 {
     sf::Vertex tempVertex;
     tempVertex.color = color;
@@ -135,8 +133,8 @@ void ParticleSystem<Args...>::addVertex(float worldX, float worldY, float textX,
     mVertexArray.append(tempVertex);
 }
 
-template <typename... Args>
-void ParticleSystem<Args...>::update(sf::Time dt)
+template <typename ParticleType>
+void ParticleSystem<ParticleType>::update(sf::Time dt)
 {
     //remove all expired particles
     while (!mParticles.empty() && mParticles.front().lifetime <= sf::Time::Zero)
@@ -154,8 +152,8 @@ void ParticleSystem<Args...>::update(sf::Time dt)
         affector(mParticles);
 }
 
-template <typename... Args>
-void ParticleSystem<Args...>::draw(sf::RenderTarget &target, sf::RenderStates states) const
+template <typename ParticleType>
+void ParticleSystem<ParticleType>::draw(sf::RenderTarget &target, sf::RenderStates states) const
 {
     if (mNeedsUpdate)
     {

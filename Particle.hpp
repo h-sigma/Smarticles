@@ -27,6 +27,8 @@
 //     return static_cast<bool>(static_cast<uint32_t>(a));
 // }
 
+//attemp 1 : using tagging and contexpr
+
 // struct Particle{
 //     static constexpr Tags tag = Tags::position | Tags::radius | Tags::lifetime | Tags::color | Tags::pathindex;
 //     sf::Time lifetime = sf::seconds(1.f);      //8bytes
@@ -36,22 +38,48 @@
 //     int pathindex = 0;  //4 bytes
 // };
 
-template <typename... T>
-struct Particle
+//attempt 2: using parameter packs and tuples
+
+// template <typename... T>
+// struct Particle
+// {
+//     //sf::Color color;
+//     sf::Vector2f position;
+//     sf::Time lifetime;     //   1
+//     std::tuple<T...> attr; //   2...n
+//     Particle(sf::Vector2f position = {}, sf::Time lifetime = sf::Time::Zero, T &&... args)
+//         : position(position), lifetime(lifetime), attr(std::forward_as_tuple(args...))
+//     {
+//     }
+//     erronous// Particle(sf::Vector2f position = {}, sf::Time lifetime = sf::Time::Zero, T const&... args)
+//     //     : position(position), lifetime(lifetime), attr(std::forward_as_tuple(args...))
+//     // {
+//     // }
+// };
+
+//attempt 3 : using mixins/direct composition
+
+struct BaseParticle
 {
-    //sf::Color color;
-    sf::Vector2f position;
-    sf::Time lifetime;     //   1
-    std::tuple<T...> attr; //   2...n
-    Particle(sf::Vector2f position = {}, sf::Time lifetime = sf::Time::Zero, T &&... args)
-        : position(position), lifetime(lifetime), attr(std::forward_as_tuple(args...))
-    {
-    }
-    // Particle(sf::Vector2f position = {}, sf::Time lifetime = sf::Time::Zero, T const&... args)
-    //     : position(position), lifetime(lifetime), attr(std::forward_as_tuple(args...))
-    // {
-    // }
+    sf::Vector2f position = {0.f,0.f};
+    sf::Time lifetime = sf::Time::Zero;
 };
+
+namespace Attr
+{
+    template<typename T>
+    struct Radius : public T
+    {
+        sf::Vector2f radius = {0.f,0.f};
+    };
+
+    template<typename T>
+    struct Flags : public T
+    {
+        uint8_t flags = 0b00000000;
+    };
+}
+
 
 
 #endif
