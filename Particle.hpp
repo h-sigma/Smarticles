@@ -65,7 +65,7 @@ struct BaseParticle
     sf::Time lifetime = sf::Time::Zero;
 };
 
-namespace Attr
+namespace attr
 {
     template<typename T>
     struct RadiusVec : public T
@@ -84,6 +84,19 @@ namespace Attr
     {
         double radius;
     };
+
+    template<typename T>
+    struct Color : public T
+    {
+        sf::Color color = sf::Color::Transparent;
+    };
+
+    template<typename, typename = void>
+    inline constexpr bool has_color_v = std::false_type{};
+
+    template<typename T>
+    inline constexpr bool has_color_v<T, std::void_t<decltype(T::color)>> = std::true_type{};
+
 }
 
 

@@ -25,9 +25,11 @@ public:
     void addParticle(ParticleType&& particle);
     void addAffector(std::function<void(std::deque<ParticleType> &)> affector);
     void setLifetime(sf::Time lifetime);
-    std::tuple<ParticleType> getDefaultParticle() const;
     void addFinalizer(std::function<void(sf::VertexArray &)> finalizer);
     void update(sf::Time dt);
+public:
+    ParticleType getDefaultParticle() const;
+    uint getParticleCount() const;
 private:
     void computeVertices() const;
     void addVertex(float worldX, float worldY, float textX, float textY, sf::Color color) const;
@@ -87,9 +89,15 @@ void ParticleSystem<ParticleType>::setLifetime(sf::Time lifetime)
 }
 
 template <typename ParticleType>
-std::tuple<ParticleType> ParticleSystem<ParticleType>::getDefaultParticle() const
+ParticleType ParticleSystem<ParticleType>::getDefaultParticle() const
 {
     return mDefaultParticle;
+}
+
+template <typename ParticleType>
+uint ParticleSystem<ParticleType>::getParticleCount() const
+{
+    return mParticles.size();
 }
 
 template <typename ParticleType>
@@ -105,10 +113,18 @@ void ParticleSystem<ParticleType>::computeVertices() const
     for (const auto &particle : mParticles)
     {
         sf::Vector2f pos = particle.position;
-        sf::Color c = mDefaultColor;
-        const float ratio = particle.lifetime.asSeconds() / mDefaultParticle.lifetime.asSeconds();
-        c.a = static_cast<uint8_t>(255 * std::max(0.0f, ratio)); //can't forget to keep the alpha value positive
-
+        sf::Color c;
+        if constexpr(attr::has_color_v<ParticleType>)
+        {
+            c = particle.color;
+        }
+        else 
+        {
+            c = mDefaultColor;
+            const float ratio = particle.lifetime.asSeconds() / mDefaultParticle.lifetime.asSeconds();
+            c.a = static_cast<uint8_t>(255 * std::max(0.0f, ratio)); //can't forget to keep the alpha value positive
+        }
+        
         addVertex(pos.x - half.x, pos.y - half.y, 0.f, 0.f, c);
         addVertex(pos.x + half.x, pos.y - half.y, size.x, 0.f, c);
         addVertex(pos.x + half.x, pos.y + half.y, size.x, size.y, c);
