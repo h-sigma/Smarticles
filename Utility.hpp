@@ -4,12 +4,36 @@
 #include <SFML/System/Vector2.hpp>
 #include <iterator>
 #include <type_traits>
+#include <random>
 
-int getInt(int a, int b);
+namespace
+{
+auto makeRandomEngine()
+{
+    return std::default_random_engine(std::random_device()());
+}
 
-float getFloat(float a, float b);
+auto engine = makeRandomEngine();
+
+} // namespace
+
+template<typename Numeric = int>
+Numeric getRandom(Numeric a, Numeric b)
+{
+    if constexpr(std::is_integral_v<Numeric>)
+    {
+        return std::uniform_int_distribution<Numeric>(a, b)(engine);
+    }
+    if constexpr(std::is_floating_point_v<Numeric>)
+    {
+        return std::uniform_real_distribution<Numeric>(a, b)(engine);
+    }
+}
+
 
 sf::Vector2f rotate(sf::Vector2f vector, float angle);
+
+
 
 template<typename iter1, typename iter2, typename Function> 
 void pairIterate(iter1 begin1, iter1 end1, iter2 begin2, iter2 end2, Function func)

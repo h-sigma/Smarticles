@@ -68,7 +68,7 @@ struct BaseParticle
 namespace Attr
 {
     template<typename T>
-    struct Radius : public T
+    struct RadiusVec : public T
     {
         sf::Vector2f radius = {0.f,0.f};
     };
@@ -77,6 +77,12 @@ namespace Attr
     struct Flags : public T
     {
         uint8_t flags = 0b00000000;
+    };
+
+    template<typename T>
+    struct RadiusLen : public T
+    {
+        double radius;
     };
 }
 

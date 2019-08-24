@@ -21,16 +21,16 @@ int main()
         txtr.create(texture.getSize().x / 2, texture.getSize().y / 2);
         txtr.clear();
         sf::Sprite sprite(texture);
-        sprite.scale(0.2f, 0.2f);
+        sprite.scale(0.15f, 0.15f);
         txtr.draw(sprite);
         txtr.display();
         texture = txtr.getTexture();
     }
 
-    sf::RenderWindow window(sf::VideoMode(800, 800), "ParticleDemo", sf::Style::Default);
+    sf::RenderWindow window(sf::VideoMode(400, 400), "ParticleDemo", sf::Style::Default);
 
     using namespace Attr;
-    using PGreen = Radius<BaseParticle>;
+    using PGreen = RadiusLen<BaseParticle>;
 
     PGreen defaultGreen;
     defaultGreen.lifetime = sf::seconds(10);
@@ -48,6 +48,7 @@ int main()
         static int rotation = 0;
         rotation ++;
         const int maxRotation = 120; 
+
         float speed = particleList.size();
         speed /= 500;
         if(speed == 0)
@@ -59,12 +60,12 @@ int main()
             float angle = 0.01f * speed;
             len = rotate(len, angle);
 
-            float variance = particle.radius.x;
+            /*double*/float variance = particle.radius;
 
             if(rotation > 30 && rotation < 90)
             variance = -variance;
             particle.position = len + center;
-            particle.position += particle.position * variance;
+            particle.position += (particle.position * variance);
         }
         rotation %= maxRotation;
     };
@@ -114,8 +115,8 @@ int main()
         const int BAND_RADIUS = 100;
         sf::Vector2f len = emit->getPosition() - center;
         sf::Vector2f unit = (len)/(std::sqrt(len.x * len.x + len.y * len.y));
-        particle.position = emit->getPosition() + unit * getFloat(0.f, BAND_RADIUS);
-        particle.radius = {getFloat(-0.0416f, 0.0416f), 0.f };
+        particle.position = emit->getPosition() + unit * getRandom<float>(0.f, BAND_RADIUS);
+        particle.radius = getRandom(0,1) ? getRandom<double>(-0.000416, -0.0001) : getRandom<double>(0.0001, 0.000416);
         emit->setPosition(rotate(len, 1.f) + center);
     };
 
