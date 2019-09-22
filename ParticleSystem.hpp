@@ -21,6 +21,7 @@ class ParticleSystem : public sf::Drawable
 {
 public:
     ParticleSystem(sf::Texture &texture, sf::Color defaultColor, ParticleType particle);
+    void addParticle();
     void addParticle(ParticleType const& particle);
     void addParticle(ParticleType&& particle);
     void addAffector(std::function<void(std::deque<ParticleType> &)> affector);
@@ -69,6 +70,11 @@ void ParticleSystem<ParticleType>::addFinalizer(std::function<void(sf::VertexArr
  {
     mFinalizer.push_back(finalizer);
  }
+template<typename ParticleType>
+void ParticleSystem<ParticleType>::addParticle()
+{
+    mParticles.push_back(mDefaultParticle);
+}
 
 template <typename ParticleType> 
 void ParticleSystem<ParticleType>::addParticle(ParticleType&& particle)
