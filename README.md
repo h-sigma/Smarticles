@@ -40,21 +40,21 @@ Now, pass this struct as a template type to the BaseParticle, and we have our ne
 ```cpp
 using PGreen = BaseParticle<my::ColorNRadius>;
 ```
-Now, PGreen is a struct that holds `position, lifetime, color, distance` in the order `sf::Color, double, sf::Vector2f, sf::Time`. 
+Result: PGreen is a struct that holds `position, lifetime, color, distance` in the order `sf::Color, double, sf::Vector2f, sf::Time`. 
 
 ## Quick Guide to using ParticleSystem
-First, create a default object of Particle PGreen that will be used by the Particle System in the absence of an Emitter attached to it. Let's call it `defaultGreen`. It has sf::Color set to sf::Color::Green.
+First, create a default object of ParticleType PGreen that will be used by the Particle System in the absence of an Emitter attached to it. Let's call it `defaultGreen`. It has sf::Color set to sf::Color::Green, hence the name.
 Now, do 
 ```cpp
 ParticleSystem<PGreen> sys(texture, sf::Color::Green, defaultGreen);
 ```
-The first argument `texture` is the particle's texture that will be rendered. The second argument is the default color the Particles will be rendered to (required even if you give a default color to `defaultGreen`). The third argument is the default particles it will create upon a call to `addParticle(/*no args*/)`.
+The first argument `texture` is the particle's texture that will be rendered. The second argument is the default color the Particles will be rendered to (required even if you give a default color to `defaultGreen`). The third argument is the default particle it will create upon a call to `addParticle(/*no args*/)`.
 
-A note about the second argument: The particle class will use the third argument's color if it has a variable named exactly `color` of type sf::Color defined in it. Otherwise, it will use the second argument's color.
+A note about the second argument: The particle class will use the third argument's member color if it has a variable exactly `sf::Color color`  in it. Otherwise, it will use the second argument's color. (If we do ParticleSystem<BaseParticle>, the particles created will use the explicit color from the constructor, because they don't hold a color variable themselves.)
 
 Now that you have a ParticleSystem, you can call any of the `addParticle()` overloads. `mWindow.draw(sys` will draw them to mWindow.
 
-Now, affectors are a big part of particle systems. In this library, affectors are functions (often lambdas) of type `void(std::deque<PGreen> &particleList)`.
+Affectors are an important part of particle systems. In this library, affectors are functions (often lambdas) of type `void(std::deque<ParticleType> &particleList)`.
 Example:
 ```cpp
 auto affector = [](std::deque<PGreen> &particleList){
@@ -65,7 +65,17 @@ auto affector = [](std::deque<PGreen> &particleList){
 };
 sys.addAffector(affector);
 ```
-If you were to do `sys.addAffector(affector);` again, the affector will be run twice per frame, meaning all affectors are retained in the ParticleSystem, and called in the order of their being added.
+Result: After particles are created in whatever state, they move to the right one pixel per frame.
+If you were to do `sys.addAffector(affector);` again, the affector will be run twice per frame, meaning that all affectors are retained in the ParticleSystem, and called in the order of their being added.
+
+Quick Note: You can use affectors to calculate some data based on the particles before passing it to another affector, thus allowing you to write more modular affectors.
+```cpp
+SomeData daataa;
+auto affector1 = [&daataa](std::deque<ParticleType> &particleList) { /* modify daataa */ };
+auto affector2 = [&daataa](std::deque<ParticleType> &particleList) { /* use daataa */ };
+sys.addAffector(affector1); // order is very important, as the daataa modifier affector1 needs to run before the user affector2
+sys.addAffector(affector2); 
+```
 
 ## Quick guide to using Emitter
 Pass the particle being created to Emitter and give it the default particle to generate. 
@@ -81,6 +91,7 @@ The emission rate is the number of particles generated per second. Manipulate th
 
 Now, you can attach modifiers to Emitters as well. These are functions, often lambdas, of type `void(ParticleType&, Emitter<ParticleType>*)`.
 Notice the two arguments. 
+
 `ParticleType&` gives you control of the particle about to be added to the ParticleSystem. Want a red particle to appear every 10 green particles?
 ```cpp
 auto modifier = [](PGreen& particle, Emitter<PGreen>* emitter) {
@@ -99,7 +110,10 @@ myEmitter.addParticleModifier(modifier);
 ```
 Much like ParticleSystems and affectors, multiple modifiers may be added to an Emitter.
 
-Now, an Emitter inherits from sf::Transformable (which can be changed by giving it your own transformable-ish class as the second template argument, i.e. `Emitter<PGreen, MyTransformable>`). This is the main reason behind the `Emitter<PGreen>*` parameter in the Emitter modifiers, so you can modify the emitter on a per-emitted-particle basis if required (may be augmented with `addEmitterModifierPerFrame()` ). Remember, the modifier is run for each particle emitted.
+As for the second argument:-
+
+An Emitter inherits from sf::Transformable (which can be changed by giving it your own transformable-ish class as the second template argument, i.e. `Emitter<PGreen, MyTransformable>`). This is the main reason behind the `Emitter<PGreen>*` parameter in the Emitter modifiers: you can modify the emitter on a per-emitted-particle basis if required. Remember, the modifier is run for each particle emitted.
+
 Following is an example of a modifier that moves the emitter up and down the screen.
 ```cpp
 auto moverupperdowner = [&mWindow](PGreen& particle, Emitter<PGreen)* emitter){
