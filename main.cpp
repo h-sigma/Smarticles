@@ -143,7 +143,7 @@ int main()
         emit->setPosition(rotate(len, .025f) + center);
     };
 
-    emit.setParticleModifier(emittermover);
+    emit.addParticleModifier(emittermover);
 
     sf::Font font;
     font.loadFromFile("assets/Sansation_Regular.ttf");
