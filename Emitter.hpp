@@ -36,7 +36,7 @@ private:
 template<typename ParticleType, typename InheritFrom>
 Emitter<ParticleType, InheritFrom>::Emitter(ParticleType defaultParticle)
 : mParticleSystem(nullptr)
-, mParticleModifier(nullptr)
+, mParticleModifiers()
 , mAccumulatedTime(sf::Time::Zero)
 , mDefaultParticle(defaultParticle)
 {
@@ -90,7 +90,7 @@ float Emitter<ParticleType, InheritFrom>::getEmissionRate() const
 template<typename ParticleType, typename InheritFrom>
 void Emitter<ParticleType, InheritFrom>::addModifier(std::function<void(ParticleType&, Emitter<ParticleType>*)> modifier)
 {
-    mParticleModifier.push_back(modifier);
+    mParticleModifiers.push_back(modifier);
 }
 
 template<typename ParticleType, typename InheritFrom>

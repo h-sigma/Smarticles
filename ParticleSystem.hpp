@@ -16,7 +16,7 @@
 int getInt(int a, int b);
 
 //TEMPLATE DECLARATION
-template <typename ParticleType = BaseParticle>
+template <typename ParticleType = BaseParticle<>>
 class ParticleSystem : public sf::Drawable
 {
 public:
@@ -30,7 +30,7 @@ public:
     void update(sf::Time dt);
 public:
     ParticleType getDefaultParticle() const;
-    uint getParticleCount() const;
+    unsigned int getParticleCount() const;
 private:
     void computeVertices() const;
     void addVertex(float worldX, float worldY, float textX, float textY, sf::Color color) const;
@@ -101,7 +101,7 @@ ParticleType ParticleSystem<ParticleType>::getDefaultParticle() const
 }
 
 template <typename ParticleType>
-uint ParticleSystem<ParticleType>::getParticleCount() const
+unsigned int ParticleSystem<ParticleType>::getParticleCount() const
 {
     return mParticles.size();
 }

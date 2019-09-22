@@ -38,7 +38,7 @@ int main()
 
     sf::RenderWindow window(sf::VideoMode(1280, 720), "ParticleDemo", sf::Style::Default);
 
-    using PGreen = BaseParticle<ColorAndRadiusLen>;
+    using PGreen = BaseParticle<my::ColorAndRadiusLen>;
 
     PGreen defaultGreen;
     defaultGreen.lifetime = sf::seconds(50);
@@ -143,7 +143,7 @@ int main()
         emit->setPosition(rotate(len, .025f) + center);
     };
 
-    emit.addParticleModifier(emittermover);
+    emit.addModifier(emittermover);
 
     sf::Font font;
     font.loadFromFile("assets/Sansation_Regular.ttf");
