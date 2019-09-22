@@ -8,6 +8,7 @@
 #include "ParticleSystem.hpp"
 
 #include <functional>
+#include <vector>
 
 
 template <typename ParticleType = BaseParticle , typename InheritFrom = sf::Transformable>
@@ -20,14 +21,14 @@ public:
     void setDefaultParticle(ParticleType defaultParticle);
     void setEmissionRate(float rate);
     float getEmissionRate() const;
-    void setParticleModifier(std::function<void(ParticleType&, Emitter<ParticleType>*)> modifier);
+    void addParticleModifier(std::function<void(ParticleType&, Emitter<ParticleType>*)> modifier);
     void setParticleSystem(ParticleSystem<ParticleType>* system);
 private:
     void emitParticles(sf::Time dt);
 private:
     float mParticlesPerSecond = 300.f;
     ParticleSystem<ParticleType>* mParticleSystem;
-    std::function<void(ParticleType&, Emitter<ParticleType>*)> mParticleModifier;
+    std::vector<std::function<void(ParticleType&, Emitter<ParticleType>*)>> mParticleModifiers;
     sf::Time mAccumulatedTime;
     ParticleType mDefaultParticle;
 };
@@ -60,8 +61,8 @@ void Emitter<ParticleType, InheritFrom>::emitParticles(sf::Time dt)
     while(mAccumulatedTime > timeInterval)
     {
         mAccumulatedTime -= timeInterval;
-        if(mParticleModifier)
-            mParticleModifier(particle, this);
+        for(auto& modifier : mParticleModifiers)
+            modifier(particle, this);
         
         mParticleSystem->addParticle(particle);
     }
@@ -87,9 +88,9 @@ float Emitter<ParticleType, InheritFrom>::getEmissionRate() const
 }
 
 template<typename ParticleType, typename InheritFrom>
-void Emitter<ParticleType, InheritFrom>::setParticleModifier(std::function<void(ParticleType&, Emitter<ParticleType>*)> modifier)
+void Emitter<ParticleType, InheritFrom>::addParticleModifier(std::function<void(ParticleType&, Emitter<ParticleType>*)> modifier)
 {
-    mParticleModifier = modifier;
+    mParticleModifier.push_back(modifier);
 }
 
 template<typename ParticleType, typename InheritFrom>
