@@ -19,7 +19,6 @@ Steps:
 6. Add a ParticleModifier that can both modify the Emitter's state (e.g. move it around in 3D space), and set properties to a particle before it's added to the ParticleSystem.
 
 ## How to create new particle types.
-Using mixins means that the code won't be beautiful unless you use `using`.
 Let's assume we need a particle that can hold four variables : `position, lifetime, color, distance`.
 The first two, position and lifetime, are the only constituents of `BaseParticle` provided to you. 
 ```cpp
