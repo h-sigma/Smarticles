@@ -59,7 +59,8 @@
 
 //attempt 3 : using mixins/direct composition
 
-struct BaseParticle
+template <typename T> 
+struct BaseParticle : public T
 {
     sf::Vector2f position = {0.f,0.f};
     sf::Time lifetime = sf::Time::Zero;
@@ -67,30 +68,6 @@ struct BaseParticle
 
 namespace attr
 {
-    template<typename T>
-    struct RadiusVec : public T
-    {
-        sf::Vector2f radius = {0.f,0.f};
-    };
-
-    template<typename T>
-    struct Flags : public T
-    {
-        uint8_t flags = 0b00000000;
-    };
-
-    template<typename T>
-    struct RadiusLen : public T
-    {
-        double radius;
-    };
-
-    template<typename T>
-    struct Color : public T
-    {
-        sf::Color color = sf::Color::Transparent;
-    };
-
     template<typename, typename = void>
     inline constexpr bool has_color_v = std::false_type{};
 
