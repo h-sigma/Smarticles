@@ -11,6 +11,14 @@
 #include <SFML/System/Time.hpp>
 #include <SFML/Graphics/Text.hpp>
 
+namespace my 
+{
+    struct ColorAndRadiusLen{
+        sf::Color color;
+        double radius;
+    };
+}
+
 int main()
 {
     sf::Texture texture;
@@ -30,8 +38,7 @@ int main()
 
     sf::RenderWindow window(sf::VideoMode(1280, 720), "ParticleDemo", sf::Style::Default);
 
-    using namespace attr;
-    using PGreen = Color<RadiusLen<BaseParticle>>;
+    using PGreen = BaseParticle<ColorAndRadiusLen>;
 
     PGreen defaultGreen;
     defaultGreen.lifetime = sf::seconds(50);
