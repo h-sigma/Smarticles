@@ -2,7 +2,10 @@
 A particle system that leverages template programming to create a flexible particle system for SFML.
 Documentation and further guides can be found in the wiki. Quick-start guides are shown below.
 
+To use for your own project, include the headers `Particle.hpp, ParticleSystem.hpp, and Emitter.hpp` into it. No build required.
+
 Limitations/TODO:
+
   Need to know the explicit type of particle being used at all times.
 
 # How to use:
@@ -11,7 +14,7 @@ Steps:
 1. Create ParticleType.
 2. Create ParticleSystem.
 3. Add Affectors to ParticleSystem that can modify each particle created by the system every frame.
-4. If the emission needs are simple, e.g. creating the same particle on the left border of the screen, you can jerryrig your own function.
+4. If the emission needs are simple, e.g. creating the same particle on the left border of the screen, you can jerryrig your own function. Also, if you don't need a constant emission rate, jerryrig your own function that calls `addParticle()`.
 5. Else, create an Emitter to methodologically add the particles.
 6. Add a ParticleModifier that can both modify the Emitter's state (e.g. move it around in 3D space), and set properties to a particle before it's added to the ParticleSystem.
 
@@ -76,7 +79,6 @@ Now, you need to attach a particle system to this emitter.
   myEmitter.setParticleSystem(&sys);
 ```
 The emission rate is the number of particles generated per second. Manipulate through `Emitter::getEmissionRate()` and `Emitter::setEmissionRate()`.
-An Emitter inherits from sf::Transformable (which can be changed by giving it your own transformable-ish class as the second template argument, i.e. `Emitter<PGreen, MyTransformable>`).
 
 Now, you can attach modifiers to Emitters as well. These are functions, often lambdas, of type `void(ParticleType&, Emitter<ParticleType>*)`.
 Notice the two arguments. 
@@ -97,3 +99,24 @@ auto modifier = [](PGreen& particle, Emitter<PGreen>* emitter) {
 myEmitter.addParticleModifier(modifier);
 ```
 Much like ParticleSystems and affectors, multiple modifiers may be added to an Emitter.
+
+Now, an Emitter inherits from sf::Transformable (which can be changed by giving it your own transformable-ish class as the second template argument, i.e. `Emitter<PGreen, MyTransformable>`). This is the main reason behind the `Emitter<PGreen>*` parameter in the Emitter modifiers, so you can modify the emitter on a per-emitted-particle basis if required (may be augmented with `addEmitterModifierPerFrame()` ). Remember, the modifier is run for each particle emitted.
+Following is an example of a modifier that moves the emitter up and down the screen.
+```cpp
+auto moverupperdowner = [&mWindow](PGreen& particle, Emitter<PGreen)* emitter){
+  //captures the SFML window by reference, yay lambdas!
+  //update position
+  static int sign = +1; //-ve is up, +ve is down in SFML
+  const STEP = 4; //move by 4 pixels per particle
+  auto pos = emitter->getPosition();
+  pos.y += STEP * sign;
+  emitter->setPosition();
+  //update sign
+  auto screen_height = mWindow.getDefaultView().getSize().y;
+  if(pos.y > screen_height || pos.y < 0)
+    sign *= -1;
+};
+sys.addModifier(moverupperdowner);
+```
+
+Result: the emitter moves up and down the screen at STEP pixels per particle, turning once it goes past the border. Combined with the constant emission rate, you get a uniform spread of particles.
